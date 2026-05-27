@@ -164,6 +164,11 @@ setuptools.setup(
         "Source Code": "https://github.com/Lumiwealth/lumibot",
         "BotSpot Platform": "https://botspot.trade/",
     },
+    entry_points={
+        "console_scripts": [
+            "lumibot=lumibot.cli:main",
+        ],
+    },
     python_requires=">=3.10",
     cmdclass={"build_py": BuildWithThetaJar},
 )
