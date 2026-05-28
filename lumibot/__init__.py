@@ -79,7 +79,16 @@ def _log_startup_version() -> None:
     logger.info(f"LumiBot v{__version__} starting")
 
 
-_log_startup_version()
+def _should_log_startup_version() -> bool:
+    if os.environ.get("LUMIBOT_HIDE_STARTUP_LOG", "").strip().lower() in {"1", "true", "yes", "on"}:
+        return False
+    if os.path.basename(sys.argv[0]) == "lumibot" and len(sys.argv) > 1:
+        return sys.argv[1] not in {"init", "run", "doctor", "studio", "-h", "--help"}
+    return True
+
+
+if _should_log_startup_version():
+    _log_startup_version()
 
 # Get the major and minor Python version
 major, minor = sys.version_info[:2]
