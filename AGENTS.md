@@ -140,9 +140,9 @@ Failure to follow these rules will break everyone's workflows—double-check env
 
 ### Version Source of Truth
 
-The **authoritative version** is in `setup.py` (look for the `version=` line):
-```python
-version="X.Y.Z",  # e.g., "4.4.25", "4.5.0", etc.
+The **authoritative version** is in `pyproject.toml` under `[project]`:
+```toml
+version = "X.Y.Z"  # e.g., "4.5.36", "4.5.37", etc.
 ```
 
 When this version changes and is committed, it signals a deploy/release is happening or imminent.
@@ -153,16 +153,16 @@ Before updating the changelog, **gather ALL commits** since the last version cha
 
 ```bash
 # Find the current version
-grep 'version=' setup.py
+rg '^version = ' pyproject.toml
 
-# Find when setup.py version was last changed
-git log --oneline -p setup.py | grep -A2 -B2 'version=' | head -30
+# Find when pyproject.toml version was last changed
+git log --oneline -p pyproject.toml | grep -A2 -B2 '^[-+]version = ' | head -30
 
 # Get commits since a specific commit/tag (replace X.Y.Z with actual previous version)
 git log --oneline <last-version-commit>..HEAD
 
 # Get commits since last version bump - replace X.Y.Z with the PREVIOUS version
-git log --oneline $(git log --oneline -1 --all -S 'version="X.Y.Z"' -- setup.py | cut -d' ' -f1)..HEAD
+git log --oneline $(git log --oneline -1 --all -S 'version = "X.Y.Z"' -- pyproject.toml | cut -d' ' -f1)..HEAD
 
 # Or use the tag if available (replace X.Y.Z with previous version)
 git log --oneline vX.Y.Z..HEAD
@@ -201,7 +201,7 @@ git log --oneline vX.Y.Z..HEAD
 
 - [ ] Reviewed git commits since last version (`git log <last-version>..HEAD`)
 - [ ] Changelog entry added with current date
-- [ ] Version number updated in setup.py (if applicable)
+- [ ] Version number updated in pyproject.toml (if applicable)
 - [ ] All significant changes documented (from ALL contributors)
 - [ ] Breaking changes marked with ⚠️
 

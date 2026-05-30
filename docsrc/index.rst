@@ -312,6 +312,7 @@ Table of Contents
    GitHub <https://github.com/Lumiwealth/lumibot>
    getting_started
    imports_and_startup
+   cli_tui
    agents
    cash_accounting
    lifecycle_methods

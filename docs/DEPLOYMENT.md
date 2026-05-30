@@ -2,7 +2,7 @@
 
 > Release/deployment workflow for LumiBot (version branches, changelog, tags, and GitHub releases).
 
-**Last Updated:** 2026-05-14
+**Last Updated:** 2026-05-30
 **Status:** Active
 **Audience:** Developers + AI Agents
 
@@ -16,7 +16,7 @@
 4) Merge the PR into `dev` (no direct pushes to `dev`).
 5) Tag the **merge commit on `dev`** as `vX.Y.Z` (this triggers GitHub Actions to publish to PyPI + create a GitHub Release).
 6) Verify `pip install lumibot==X.Y.Z` works.
-7) **Switch your LOCAL checkout to `version/X.Y.(Z+1)`** after the release. Carry-over is only for work that appeared after the release was tagged/published, or work intentionally excluded because it was unsafe or out of scope. Verify with `git branch --show-current`, `grep version= setup.py`, and `git status --porcelain=v1` before doing anything else. This is NOT optional. There are zero exceptions.
+7) **Switch your LOCAL checkout to `version/X.Y.(Z+1)`** after the release. Carry-over is only for work that appeared after the release was tagged/published, or work intentionally excluded because it was unsafe or out of scope. Verify with `git branch --show-current`, `rg '^version = ' pyproject.toml`, and `git status --porcelain=v1` before doing anything else. This is NOT optional. There are zero exceptions.
 8) Trigger BotManager deploys (dev then prod) only after step 7 is complete — this takes ~30 minutes and should be the last step.
 9) Post-deploy: run an MCP backtest against prod and assert `settings.json.lumibot_version == "X.Y.Z"`. See step 8.
 
@@ -52,7 +52,7 @@ Release order for tearsheet metric changes:
 
 - Make deployments traceable (what code was deployed, when, and why).
 - Keep multi-agent collaboration safe (shared `version/*` branches).
-- Avoid “version drift” between deployed artifacts and `setup.py`.
+- Avoid “version drift” between deployed artifacts and `pyproject.toml`.
 - Make “what changed” readable (changelog + PR description quality).
 
 ---
@@ -64,7 +64,7 @@ Release order for tearsheet metric changes:
 - **Do not push directly to `dev`.** All changes land in `dev` via PR merge.
 - **Never update an old `version/*` branch to make a stale GitHub URL look current.** Historical version branches are release records, not redirect targets. If someone is viewing an older branch, give them the latest active `version/X.Y.Z` URL instead of pushing current work to the old branch or switching the canonical checkout backwards.
 - The canonical checkout at `/Users/robertgrzesik/Development/lumibot` must stay on the latest active `version/X.Y.Z` branch. If it is on an older version branch, stop and fix that state with `git switch` only after verifying the tree is clean.
-- `setup.py` **must** match the version branch name (`X.Y.Z`).
+- `pyproject.toml` **must** match the version branch name (`X.Y.Z`).
   - When you start a new version branch, bump immediately and commit: `chore: start X.Y.Z`.
   - **Never downgrade** versions. If a bump was wrong, bump forward (and document why).
 - After a version branch is merged to `dev`, **immediately start the next version branch** (see Step 7).
@@ -120,7 +120,7 @@ Mandatory verification after every release:
 
 ```bash
 git branch --show-current            # MUST print version/X.Y.(Z+1)
-grep 'version=' setup.py | head -1   # MUST print version="X.Y.(Z+1)",
+rg '^version = ' pyproject.toml      # MUST print version = "X.Y.(Z+1)"
 git status --porcelain=v1            # MUST be empty
 git log --oneline origin/version/X.Y.(Z+1)..HEAD
 ```
@@ -137,7 +137,7 @@ git push origin version/X.Y.(Z+1)
 
 When you are “the person deploying”, you own the release notes even if you didn’t write the code.
 
-- **Read the full commit range** since the last `setup.py` bump and ensure `CHANGELOG.md` covers it.
+- **Read the full commit range** since the last `pyproject.toml` version bump and ensure `CHANGELOG.md` covers it.
 - **Audit PRs** in the range for correctness, perf claims, and risk (don’t assume other bots did it right).
 - **Enforce PR description quality** (template below).
 - **Enforce perf evidence** when perf is claimed (YAPPI + measured before/after).
@@ -242,9 +242,9 @@ Publishing is **tag-driven** via `.github/workflows/release.yml`.
      - major perf changes (include before/after numbers)
      - operational changes (caches, infra dependencies, env vars, runbooks)
    - Include: `Deploy marker: <commit>` referencing the `deploy X.Y.Z` commit hash (added in Step 3).
-   - The entry must include **all significant commits** since the previous `setup.py` version bump:
+   - The entry must include **all significant commits** since the previous `pyproject.toml` version bump:
      - Find the previous bump commit:
-       - `git log -p -- setup.py`
+       - `git log -p -- pyproject.toml`
      - Build the draft changelog from the full range (pre-deploy marker):
        - `git log --oneline <previous-bump-commit>..HEAD`
      - After Step 3 creates the deploy-marker commit, re-run the range using that commit:
@@ -252,7 +252,7 @@ Publishing is **tag-driven** via `.github/workflows/release.yml`.
    - If you merged before the changelog is complete, fix it immediately as a follow-up PR to `dev`.
 
 3) **Deploy-marker commit (no version downgrades)**
-   - Confirm `setup.py` is already `version="X.Y.Z"` (it should match the `version/X.Y.Z` branch).
+   - Confirm `pyproject.toml` is already `version = "X.Y.Z"` (it should match the `version/X.Y.Z` branch).
      - If it’s wrong, fix it by bumping forward (never downgrade).
    - Ensure `CHANGELOG.md` has `## X.Y.Z - YYYY-MM-DD` and includes the full range of changes.
    - Commit with message: `deploy X.Y.Z` (this is the deploy marker).
@@ -264,7 +264,7 @@ Publishing is **tag-driven** via `.github/workflows/release.yml`.
    - Create an annotated tag `vX.Y.Z` pointing at the *merge commit on `dev`* (or the deploy-marker commit if it was fast-forwarded).
    - Push the tag to GitHub.
    - Let `.github/workflows/release.yml` run:
-     - validates tag ↔ `setup.py`,
+     - validates tag ↔ `pyproject.toml`,
      - runs `pytest -m "not apitest and not downloader"`,
      - builds + publishes to PyPI,
      - creates the GitHub Release.
@@ -297,7 +297,7 @@ Publishing is **tag-driven** via `.github/workflows/release.yml`.
 
 5.5) **If the release workflow fails (fast triage)**
    - Wrong commit tagged:
-     - Symptom: “Validate tag version matches setup.py” fails.
+     - Symptom: “Validate tag version matches pyproject.toml” fails.
      - Fix: tag the correct `dev` merge commit (and if you already published to PyPI, bump forward).
    - Missing `PYPI_API_TOKEN`:
      - Symptom: “Publish to PyPI” fails with auth/permission errors.
@@ -338,7 +338,7 @@ Publishing is **tag-driven** via `.github/workflows/release.yml`.
 
      ```bash
      git branch --show-current            # MUST print version/X.Y.(Z+1)
-     grep 'version=' setup.py | head -1   # MUST print version="X.Y.(Z+1)",
+     rg '^version = ' pyproject.toml      # MUST print version = "X.Y.(Z+1)"
      git status --porcelain=v1            # MUST be empty after pushing carry-overs
      ```
 
@@ -412,8 +412,8 @@ Publishing is **tag-driven** via `.github/workflows/release.yml`.
   - Other engineers merge PRs to `dev` independently. If you don’t pull `dev` into your version branch
     before deploying, those changes won’t ship even though they’re merged.
   - Step 0.5 exists specifically for this — don’t skip it.
-- **Version drift (`setup.py` doesn’t match the branch name)** breaks traceability and confuses deployments.
-  - Fix: enforce “`setup.py` == `version/X.Y.Z`” as a hard invariant.
+- **Version drift (`pyproject.toml` doesn’t match the branch name)** breaks traceability and confuses deployments.
+  - Fix: enforce “`pyproject.toml` == `version/X.Y.Z`” as a hard invariant.
   - Never downgrade versions; always bump forward if something went wrong.
 - **Publishing to PyPI without pushing the `vX.Y.Z` tag first** breaks traceability.
   - The repo’s release workflow is tag-driven. If the version is already on PyPI, pushing the tag later will
@@ -451,7 +451,7 @@ Publishing is **tag-driven** via `.github/workflows/release.yml`.
 ## Automation in place
 
 - **Auto-create next version branch**: After the release workflow publishes to PyPI, a `start-next-version`
-  job automatically creates `version/X.Y.(Z+1)` from `dev`, bumps `setup.py`, and pushes. This prevents
+  job automatically creates `version/X.Y.(Z+1)` from `dev`, bumps `pyproject.toml`, and pushes. This prevents
   the "forgot to create the next branch" problem that blocked development after v4.4.56.
 - **Version logged at startup**: `LumiBot v{version} starting` is logged via `logger.info` when the
   package is imported, making it visible in CloudWatch, backtest logs, and live trading logs.

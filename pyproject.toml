@@ -1,21 +1,147 @@
-# pyproject.toml seems to be more popular than setup.cfg these days.  Adding
-# configs for tools that use it and will port as much here as possible.
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
 
-# Ruff is a tool that combines several linters into one including Flake8 and isort.
-# Runs much faster than running them individually.
+[project]
+name = "lumibot"
+version = "4.5.36"
+description = "Python framework for algorithmic trading: backtesting and live deployment for stocks, options, crypto, futures, and forex. Same code for backtest and live trading."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+authors = [
+  { name = "Robert Grzesik", email = "rob@botspot.trade" },
+]
+keywords = [
+  "algorithmic-trading",
+  "backtesting",
+  "trading-bot",
+  "live-trading",
+  "stocks",
+  "options",
+  "crypto",
+  "cryptocurrency",
+  "futures",
+  "forex",
+  "quantitative-finance",
+  "alpaca",
+  "interactive-brokers",
+  "tradier",
+  "schwab",
+  "trading-strategies",
+  "paper-trading",
+  "ai-trading",
+  "multi-asset",
+  "event-driven",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Financial and Insurance Industry",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Topic :: Office/Business :: Financial",
+  "Topic :: Office/Business :: Financial :: Investment",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+  "polygon-api-client>=1.13.3",
+  "alpaca-py>=0.42.0",
+  "alpha_vantage",
+  "ibapi==9.81.1.post1",
+  "yfinance>=0.2.61",
+  "matplotlib>=3.3.3",
+  "quandl",
+  "numpy>=1.20.0",
+  "pandas>=2.2.0",
+  "polars>=1.32.3",
+  "pandas_market_calendars>=5.1.0",
+  "pandas-ta-classic>=0.3.14b0",
+  "plotly>=5.18.0",
+  "sqlalchemy",
+  "bcrypt",
+  "pytest",
+  "yappi>=1.6.0",
+  "scipy>=1.14.0",
+  "quantstats-lumi>=1.1.4,<1.2.0",
+  "python-dotenv",
+  "ccxt>=4.5.50",
+  "termcolor",
+  "jsonpickle",
+  "apscheduler>=3.10.4",
+  "appdirs",
+  "pyarrow>=15.0.0",
+  "tqdm",
+  "lumiwealth-tradier>=0.1.18",
+  "pytz",
+  "psycopg2-binary",
+  "exchange_calendars>=4.6.0",
+  "duckdb",
+  "tabulate",
+  "databento>=0.42.0",
+  "holidays",
+  "psutil",
+  "openai",
+  "setuptools<81",
+  "google-adk[extensions]>=2.0.0,<3.0.0",
+  "google-genai>=1.72.0,<2.0.0",
+  "litellm>=1.83.7,<=1.83.14",
+  "anyio>=4.10.0",
+  "mcp>=1.26.0",
+  "schwab-py>=1.5.0",
+  "Flask>=2.3",
+  "free-proxy",
+  "requests-oauthlib",
+  "boto3>=1.40.64",
+  "httpx",
+]
+
+[project.optional-dependencies]
+thetadata = [
+  "thetadata",
+]
+tui = [
+  "textual>=8,<9",
+  "rich>=15,<16",
+]
+
+[project.scripts]
+lumibot = "lumibot.cli:main"
+
+[project.urls]
+Documentation = "https://lumibot.lumiwealth.com/"
+"Bug Tracker" = "https://github.com/Lumiwealth/lumibot/issues"
+"Source Code" = "https://github.com/Lumiwealth/lumibot"
+"BotSpot Platform" = "https://botspot.trade/"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["lumibot", "lumibot.*"]
+
+[tool.setuptools.package-data]
+lumibot = [
+  "resources/conf.yaml",
+  "resources/ThetaTerminal.jar",
+]
+
 [tool.ruff]
 line-length = 120
+target-version = "py310"
 
-# Assume Python 3.8+ for type annotations
-target-version = "py38"
-
+[tool.ruff.lint]
 select = [
-  "A",  # prevent using keywords that clobber python builtins
-  "B",  # bugbear: security warnings
-  "E",   # pycodestyle
-  "F", # pyflakes
-  "W", # pycodestyle
-  "UP", # pyupgrade
-  "I",  # isort
-  #  "D",   # pydocstyle
+  "A",
+  "B",
+  "E",
+  "F",
+  "W",
+  "UP",
+  "I",
 ]

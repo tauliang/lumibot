@@ -10,8 +10,8 @@ from importlib.machinery import ModuleSpec
 _SETUP_VERSION_RE = re.compile(r"^\s*version\s*=\s*(['\"])(?P<version>.+?)\1\s*,?\s*$")
 
 
-def _read_version_from_setup_py() -> str | None:
-    """Best-effort: when running from a source checkout via PYTHONPATH, prefer setup.py's version.
+def _read_version_from_source_tree() -> str | None:
+    """Best-effort: when running from a source checkout via PYTHONPATH, prefer source metadata.
 
     This avoids the common confusion where importlib.metadata returns the *installed* wheel
     version (e.g. 4.4.16) while the runtime is actually importing source (e.g. 4.4.18).
@@ -20,6 +20,19 @@ def _read_version_from_setup_py() -> str | None:
     try:
         current = os.path.dirname(os.path.abspath(__file__))
         while True:
+            pyproject_toml = os.path.join(current, "pyproject.toml")
+            if os.path.isfile(pyproject_toml):
+                try:
+                    import tomllib
+
+                    with open(pyproject_toml, "rb") as file:
+                        project = tomllib.load(file).get("project", {})
+                    version = project.get("version")
+                    if isinstance(version, str) and version.strip():
+                        return version.strip()
+                except Exception:
+                    pass
+
             setup_py = os.path.join(current, "setup.py")
             if os.path.isfile(setup_py):
                 with open(setup_py, encoding="utf-8", errors="ignore") as file:
@@ -38,7 +51,7 @@ def _read_version_from_setup_py() -> str | None:
 
 # Get and display the version
 try:
-    __version__ = _read_version_from_setup_py()
+    __version__ = _read_version_from_source_tree()
     if __version__ is None:
         from importlib.metadata import version
 
@@ -129,6 +142,7 @@ _SUBMODULE_EXPORTS = {
     "traders",
     "tools",
     "components",
+    "runtime",
     "constants",
     "credentials",
     "trading_builtins",
@@ -308,6 +322,7 @@ __all__ = [
     'traders',
     'tools',
     'components',
+    'runtime',
     'constants',
     'credentials',
     'trading_builtins',
