@@ -29,7 +29,7 @@ To upgrade to the latest version:
 What Python version does LumiBot require?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-LumiBot requires **Python 3.10 or higher**. This is enforced in ``setup.py`` via ``python_requires=">=3.10"``. We recommend Python 3.10 or 3.11 for the best compatibility with all features, including AI agent trading.
+LumiBot requires **Python 3.10 or higher**. This is enforced in ``pyproject.toml`` via ``requires-python = ">=3.10"``. We recommend Python 3.10 or 3.11 for the best compatibility with all features, including AI agent trading.
 
 What is the fastest way to get a strategy running?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

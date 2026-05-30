@@ -15,6 +15,7 @@ def test_lazy_package_all_exports_resolve():
         "lumibot.components.agents",
         "lumibot.data_sources",
         "lumibot.entities",
+        "lumibot.runtime",
         "lumibot.strategies",
         "lumibot.tools",
         "lumibot.traders",

@@ -34,14 +34,14 @@ jobs:
           pip install -r requirements_dev.txt
           pip install build
 
-      - name: Validate tag version matches setup.py
+      - name: Validate tag version matches pyproject.toml
         run: |
           set -euo pipefail
           python - <<'PY'
           from __future__ import annotations
 
           import os
-          import re
+          import tomllib
           from pathlib import Path
 
           tag = os.environ.get("GITHUB_REF_NAME", "")
@@ -49,13 +49,11 @@ jobs:
             raise SystemExit(f"Expected tag like vX.Y.Z, got {tag!r}")
           version = tag.removeprefix("v")
 
-          setup_text = Path("setup.py").read_text(encoding="utf-8")
-          m = re.search(r"version\s*=\s*['\"]([^'\"]+)['\"]", setup_text)
-          setup_version = m.group(1) if m else None
-          if setup_version != version:
-            raise SystemExit(f"Tag version {version} != setup.py version {setup_version}")
+          pyproject_version = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))["project"]["version"]
+          if pyproject_version != version:
+            raise SystemExit(f"Tag version {version} != pyproject.toml version {pyproject_version}")
 
-          print(f"OK: tag={tag} setup.py={setup_version}")
+          print(f"OK: tag={tag} pyproject.toml={pyproject_version}")
           PY
 
       - name: Run tests
@@ -142,8 +140,9 @@ jobs:
           NEXT_PATCH=$((PATCH + 1))
           NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}"
           BRANCH="version/${NEXT_VERSION}"
+          export VERSION NEXT_VERSION
 
-          echo "Current: ${VERSION} → Next: ${NEXT_VERSION} → Branch: ${BRANCH}"
+          echo "Current: ${VERSION} -> Next: ${NEXT_VERSION} -> Branch: ${BRANCH}"
 
           # Check if branch already exists (idempotent)
           if git ls-remote --heads origin "${BRANCH}" | grep -q "${BRANCH}"; then
@@ -158,16 +157,32 @@ jobs:
           # Create the branch from dev
           git switch -c "${BRANCH}"
 
-          # Bump setup.py
-          sed -i "s/version=\"${VERSION}\"/version=\"${NEXT_VERSION}\"/" setup.py
-          grep "version=" setup.py  # verify
+          # Bump pyproject.toml
+          python - <<'PY'
+          from __future__ import annotations
+
+          import os
+          import re
+          from pathlib import Path
+
+          current = os.environ["VERSION"]
+          next_version = os.environ["NEXT_VERSION"]
+          path = Path("pyproject.toml")
+          text = path.read_text(encoding="utf-8")
+          pattern = r'(?m)^(version\s*=\s*")' + re.escape(current) + r'(")\s*$'
+          text, count = re.subn(pattern, rf"\g<1>{next_version}\2", text, count=1)
+          if count != 1:
+            raise SystemExit(f"Could not update pyproject.toml version {current} -> {next_version}")
+          path.write_text(text, encoding="utf-8")
+          print(f"pyproject.toml version={next_version}")
+          PY
 
           # Add changelog placeholder
           sed -i "s/^# Changelog$/# Changelog\n\n## ${NEXT_VERSION} - Unreleased/" CHANGELOG.md
 
           # Commit and push
-          git add setup.py CHANGELOG.md
+          git add pyproject.toml CHANGELOG.md
           git commit -m "chore: start ${NEXT_VERSION}"
           git push -u origin "${BRANCH}"
 
-          echo "✅ Created ${BRANCH} with setup.py=${NEXT_VERSION}"
+          echo "Created ${BRANCH} with pyproject.toml=${NEXT_VERSION}"

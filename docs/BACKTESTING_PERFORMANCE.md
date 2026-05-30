@@ -758,7 +758,7 @@ This file is appended automatically by the acceptance harness and provides:
 - timestamp
 - test name
 - execution time seconds
-- git commit hash + version (from `setup.py`)
+- git commit hash + version (from `pyproject.toml`)
 
 ### How to use it
 
